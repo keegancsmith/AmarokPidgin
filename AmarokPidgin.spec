@@ -1,0 +1,2 @@
+name = AmarokPidgin
+type = generic
