@@ -5,11 +5,13 @@
 import dbus
 import re
 import signal
+import xml.parsers.expat
 from commands import getoutput
 from sys import stdin, exit
 from time import sleep
 from ConfigParser import ConfigParser
 from StringIO import StringIO
+from random import choice
 
 DEBUG = False
 
@@ -24,7 +26,32 @@ variable_map = # Put a lambda statement here that will be passed every (variable
 variable_imports = # Put import statements here for any modules that may be needed to run variable_map
 """
 
+class ParseLyrics(object):
+    def __init__(self, lyric_xml):
+        p = xml.parsers.expat.ParserCreate()
+
+        p.StartElementHandler = self.start_element
+        p.EndElementHandler = self.end_element
+        p.CharacterDataHandler = self.char_data
+
+        self.page_url = ''
+        self.lyrics = []
+
+        p.Parse(lyric_xml)
+
+    def start_element(self, name, attrs):
+        self.page_url = attrs['page_url']
+        
+    def end_element(self, name):
+        self.lyrics = ''.join(self.lyrics).split('\n')
+    
+    def char_data(self, data):
+        self.lyrics.append(data)
+
+
 class AmarokPidgin(object):
+    variables = ("album", "artist", "genre", "title", "track", "year",
+                 "nowPlaying", "lyricsURL", "lyrics")
 
     def __init__(self):
         """
@@ -145,7 +172,7 @@ class AmarokPidgin(object):
             # Configure status message
             current_status = self.config.get("AmarokPidgin", "status_message").replace("$","\\$")
             text = "This will change the format of your Now Playing message.\n" + \
-                   "Valid variables are: \\$album, \\$artist, \\$genre, \\$title and \\$track"
+                   "Valid variables are: \\$%s." % ', \\$'.join(AmarokPidgin.variables)
 
             new_status = getoutput('kdialog --title "%s" --textinputbox "%s" "%s" 2> /dev/null' %
                                     (title, text, current_status))
@@ -273,12 +300,34 @@ class AmarokPidgin(object):
         "Gets the currently playing song from amarok."
         new_status = self.config.get("AmarokPidgin", "status_message")
 
-        variables = ("album", "artist", "genre", "title", "track")
-        for var in variables:
+        for var in AmarokPidgin.variables:
             if not ("$" + var) in new_status:
                 continue
 
-            value = getoutput("dcop amarok player %s 2> /dev/null" % var)
+            if var == "lyricsURL": #URL is extracted from lyrics
+                value = getoutput("dcop amarok player lyrics 2> /dev/null")
+            else:
+                value = getoutput("dcop amarok player %s 2> /dev/null" % var)
+            value = value.strip()
+
+            if var == "year" and value == "0":
+                value = ''
+            if var == "title" and len(value) == 0:
+                # if title is empty, nowPlaying returns something reasonable
+                new_status = new_status.replace("$title", "$nowPlaying")
+                continue
+            if var.startswith("lyrics"):
+                try:
+                    l = ParseLyrics(value)
+                except xml.parsers.expat.ExpatError:
+                    pass
+                value = ''
+                if var == "lyrics" and l.lyrics:
+                    value = choice(l.lyrics).encode("utf8")
+                elif var == "lyricsURL" and l.page_url:
+                    value = l.page_url.encode("utf8")
+
+                            
             value = self.variable_map(var, value)
             new_status = new_status.replace("$" + var, value)
 

@@ -24,6 +24,12 @@ Configuration:
    - $genre
    - $title
    - $track
+   - $year
+   - $nowPlaying
+   - $lyricsURL
+   - $lyrics
+ * $lyrics variable displays a single line from the lyrics of the song. The
+   lyrics must be fetched by Amarok first.
  * More configuartion options can be found in AmarokPidgin.ini, which can be
    found in ~/.kde/share/apps/amarok/scripts-data/
  * To edit the list of expletives edit censor_words in AmarokPidgin.ini. Words
@@ -37,6 +43,8 @@ Variable Map:
  imports required for variable_map. Things such as saying displaying Unknown
  for empty strings are possible.
  Examples:
+ * Quote
+   variable_map = lambda x,y : y and ("'"+y+"'") or ''
  * Unknown String
    variable_map = lambda x,y : y or ("Unknown " + x.capitalize())
  * iPodify strings
@@ -47,8 +55,10 @@ This software is distributed under the GPLv2. Please read COPYING for more
 information.
 
 Changelog:
- * Version 0.1.9 (02/04/2008)
-   - Variable Map. Based on work by Ryan Davis
+ * Version 0.1.9 (07/04/2008)
+   - New variables: $year, $nowPlaying, $lyricsURL, $lyrics. Based on a patch
+     by Hieu Hoang.
+   - Variable Map. Based on work by Ryan Davis.
    - Seems to work with Pidgin 2.4.0 now.
    - Media status is of type Avaliable now by default.
  * Version 0.1.8 (09/02/2008)
