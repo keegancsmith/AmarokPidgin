@@ -40,10 +40,16 @@ class ParseLyrics(object):
         p.Parse(lyric_xml)
 
     def start_element(self, name, attrs):
-        self.page_url = attrs['page_url']
+        if 'page_url' in attrs:
+            self.page_url = attrs['page_url']
         
     def end_element(self, name):
+        # Normalize data
         self.lyrics = ''.join(self.lyrics).split('\n')
+        # Remove uneeded whitespace
+        self.lyrics = [s.strip() for s in self.lyrics]
+        # Remove empty lines
+        self.lyrics = filter(bool, self.lyrics)
     
     def char_data(self, data):
         self.lyrics.append(data)
