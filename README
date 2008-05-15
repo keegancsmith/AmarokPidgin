@@ -1,5 +1,5 @@
 Now Listening for Pidgin
-Version 0.1.9 - April 2008
+Version 0.1.9 - May 2008
 
 Description:
 A plugin for Amarok that updates your Pidgin status message with what you are
@@ -9,8 +9,8 @@ If you want to update your Gaim status message, look for the AmarokGaim
 package.
 
 Dependicies:
- * Amarok (Tested on Amarok 1.4.8)
- * Pidgin with D-Bus support (Tested on Pidgin 2.4.0)
+ * Amarok (Tested on Amarok 1.4.9.1)
+ * Pidgin with D-Bus support (Tested on Pidgin 2.4.1)
  * Python with D-Bus support (Tested on Python 2.4.4)
  * DCOP client (KDE 3.5.9)
  * Optionally depends on chardet for better character decoding.
@@ -55,7 +55,7 @@ This software is distributed under the GPLv2. Please read COPYING for more
 information.
 
 Changelog:
- * Version 0.1.9 (07/04/2008)
+ * Version 0.1.9 (16/05/2008)
    - New variables: $year, $nowPlaying, $lyricsURL, $lyrics. Based on a patch
      by Hieu Hoang.
    - Variable Map. Based on work by Ryan Davis.
