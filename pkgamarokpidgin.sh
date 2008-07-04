@@ -12,9 +12,10 @@ if grep -i debug.*true AmarokPidgin.py; then
     fi
 fi
 
-version=$(head -n 2 README | tail -n 1 | awk '{ print $2 }')
+version=$(fgrep ':Version:' README | awk '{ print $2 }')
 
 mkdir AmarokPidgin
+rst2html.py README > README.html
 cp AmarokPidgin.py AmarokPidgin.spec COPYING README AmarokPidgin
 tar cjf AmarokPidgin-$version.amarokscript.tar.bz2 AmarokPidgin
 
