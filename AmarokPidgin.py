@@ -89,7 +89,9 @@ class AmarokPidgin(object):
             #current = purple.PurpleSavedstatusGetCurrent()
             #status_type = purple.PurpleSavedstatusGetType(current)
             # Make status type available instead
-            status_type = purple.PurplePrimitiveGetTypeFromId("available")
+            status_type = purple.PurplePrimitiveGetTypeFromId("tune")
+            if status_type == 0: # Doesnt have tune status
+                status_type = purple.PurplePrimitiveGetTypeFromId("available")
             status = purple.PurpleSavedstatusNew(status_name, status_type)
 
         self.default        = purple.PurpleSavedstatusGetCurrent()

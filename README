@@ -5,7 +5,7 @@
 ==============
 
 :Author: Keegan Carruthers-Smith <keegan.csmith@gmail.com>
-:Version: 0.1.9
+:Version: 0.2
 :Date: May 2008
 :URL: http://people.cs.uct.ac.za/~smtkee002/AmarokPidgin.html
 :Download: http://www.kde-apps.org/content/show.php?content=48025
@@ -99,6 +99,13 @@ information.
 
 Changelog
 =========
+
+* Version 0.2 (Under developement)
+
+  - Made Media status type "tune". To update:
+    + Stop AmarokPidgin in Amarok
+    + Delete Media status in Pidgin
+    + Start AmarokPidgin in Amarok
 
 * Version 0.1.9 (16/05/2008)
 
