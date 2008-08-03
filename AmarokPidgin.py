@@ -57,7 +57,7 @@ class ParseLyrics(object):
 
 class AmarokPidgin(object):
     variables = ("album", "artist", "genre", "title", "track", "year",
-                 "nowPlaying", "lyricsURL", "lyrics")
+                 "nowPlaying", "lyricsURL", "lyrics", "score", "rating")
 
     def __init__(self):
         """

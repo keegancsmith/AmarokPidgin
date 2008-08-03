@@ -47,6 +47,8 @@ Configuration
   - $nowPlaying
   - $lyricsURL
   - $lyrics
+  - $rating
+  - $score
 
 * *$lyrics* variable displays a single line from the lyrics of the song. The
   lyrics must be fetched by Amarok first.
@@ -103,9 +105,12 @@ Changelog
 * Version 0.2 (Under developement)
 
   - Made Media status type "tune". To update:
+
     + Stop AmarokPidgin in Amarok
     + Delete Media status in Pidgin
     + Start AmarokPidgin in Amarok
+
+  - Added variables rating and score.
 
 * Version 0.1.9 (16/05/2008)
 
