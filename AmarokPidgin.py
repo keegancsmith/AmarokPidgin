@@ -7,7 +7,7 @@ import re
 import signal
 import xml.parsers.expat
 from commands import getoutput
-from sys import stdin, exit
+from sys import stdin, exit, argv
 from time import sleep
 from ConfigParser import ConfigParser
 from StringIO import StringIO
@@ -55,11 +55,73 @@ class ParseLyrics(object):
         self.lyrics.append(data)
 
 
+class Amarok2(object):
+    """
+    Dictionary like interface to Amarok2's metadata. Uses Amaroks MPRIS DBUS
+    interface.
+    """
+    def __init__(self):
+        bus = dbus.SessionBus()
+        obj = bus.get_object('org.mpris.amarok', '/Player')
+        interface = 'org.freedesktop.MediaPlayer'
+        self.player = dbus.Interface(obj, dbus_interface=interface)
+
+    def __getitem__(self, key):
+        return player.GetMetadata().get(key, '')
+
+    def is_playing(self):
+        # TODO implement
+        pass
+
+    def listen(self):
+        # TODO implement
+        pass
+
+
+class Amarok1(object):
+    """
+    Dictionary like interface to Amarok1's metadata. Uses Amaroks DCOP
+    interface.
+    """
+    def __getitem__(self, key):
+        if key == "lyricsURL": #URL is extracted from lyrics
+            value = getoutput("dcop amarok player lyrics 2> /dev/null")
+        else:
+            value = getoutput("dcop amarok player %s 2> /dev/null" % key)
+        return value.strip()
+
+    def is_playing(self):
+        return getoutput('dcop amarok player isPlaying 2> /dev/null').lower() == "true"
+
+    def listen(self):
+        """
+        Generator that listens for messages from stdin.
+        """
+        while True:
+            message = stdin.readline()
+
+            if len(message) == 0:
+                break
+
+            #self.log("Got message: %s" % message)
+
+            # Function that given a list, will tell you if any of the
+            # strings are in message
+            is_in = lambda li: len([x for x in li if x in message]) > 0
+
+            if is_in( ("trackChange", "playing") ):
+                yield 'playing'
+            elif is_in( ("empty", "idle", "paused") ):
+                yield 'stopped'
+            elif "configure" in message:
+                yield 'configure'
+
+
 class AmarokPidgin(object):
     variables = ("album", "artist", "genre", "title", "track", "year",
                  "nowPlaying", "lyricsURL", "lyrics", "score", "rating")
 
-    def __init__(self):
+    def __init__(self, amarok):
         """
         Connects too Pidgin's dbus interface.
         Stores the following variables:
@@ -75,10 +137,12 @@ class AmarokPidgin(object):
 
         self.config = None
         self.parse_config()
+        self.amarok = amarok
 
         # Get the purple object
         bus = dbus.SessionBus()
-        obj = bus.get_object("im.pidgin.purple.PurpleService", "/im/pidgin/purple/PurpleObject")
+        obj = bus.get_object("im.pidgin.purple.PurpleService",
+                             "/im/pidgin/purple/PurpleObject")
         purple = dbus.Interface(obj, "im.pidgin.purple.PurpleInterface")
 
         # Get the status object
@@ -104,10 +168,6 @@ class AmarokPidgin(object):
 
         # Load variable map
         try:
-            exec(self.config.get("AmarokPidgin", "variable_imports"))
-        except:
-            pass
-        try:
             self.variable_map = eval(self.config.get("AmarokPidgin", "variable_map"))
             self.log("Loaded variable_map")
 
@@ -121,7 +181,7 @@ class AmarokPidgin(object):
             self.log("variable_map passed sanity check")
             
         # If currently playing, change status
-        if getoutput('dcop amarok player isPlaying 2> /dev/null').lower() == "true":
+        if amarok.is_playing():
             self.song = self.get_currently_playing()
             self.update_display(self.song)
 
@@ -312,11 +372,7 @@ class AmarokPidgin(object):
             if not ("$" + var) in new_status:
                 continue
 
-            if var == "lyricsURL": #URL is extracted from lyrics
-                value = getoutput("dcop amarok player lyrics 2> /dev/null")
-            else:
-                value = getoutput("dcop amarok player %s 2> /dev/null" % var)
-            value = value.strip()
+            value = self.amarok[var]
 
             if var == "year" and value == "0":
                 value = ''
@@ -344,19 +400,8 @@ class AmarokPidgin(object):
 
     def listenForSongChanges(self):
         "Listens for song changes from stdin. This method is blocking."
-        while True:
-            message = stdin.readline()
-
-            if len(message) == 0:
-                break
-
-            self.log("Got message: %s" % message)
-
-            # Function that given a list, will tell you if any of the
-            # strings are in message
-            is_in = lambda li: len([x for x in li if x in message]) > 0
-
-            if is_in( ("trackChange", "playing") ):
+        for action in self.amarok.listen():
+            if action == 'playing':
                 message = self.get_currently_playing()
                 self.log("Previously Playing: %s" % message)
                 self.log("Currently Playing: %s" % message)
@@ -365,7 +410,7 @@ class AmarokPidgin(object):
                     self.update_display(message)
                 self.revert_status = False
 
-            elif is_in( ("empty", "idle", "paused") ):
+            elif action == 'stopped':
                 if self.purple.PurpleSavedstatusGetCurrent() == self.status:
                     self.revert_status = True
                     self.purple.PurpleSavedstatusActivate(self.default)
@@ -373,7 +418,7 @@ class AmarokPidgin(object):
 
                 self.log("Default: %d" % self.default)
 
-            elif "configure" in message:
+            elif action == 'configure':
                 self.configure()
 
 
@@ -381,7 +426,7 @@ class AmarokPidgin(object):
 amarokPidgin = None
 
 def cleanup(signum, frame):
-    "Tries too change the status back too the default"
+    "Tries to change the status back to the default"
     global amarokPidgin
     try:
         if amarokPidgin:
@@ -396,10 +441,15 @@ def cleanup(signum, frame):
 
 
 if __name__ == "__main__":
+    interfacecls = Amarok1
+    if len(argv) > 1 and argv[1] == 'amarok2':
+        interfacecls = Amarok2
+
     signal.signal(signal.SIGTERM, cleanup)
     while True:
         try:
-            amarokPidgin = AmarokPidgin()
+            interface = interfacecls()
+            amarokPidgin = AmarokPidgin(interface)
             amarokPidgin.listenForSongChanges()
         except dbus.DBusException:
             # This usually means Pidgin has closed.  Change the status
