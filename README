@@ -98,7 +98,7 @@ Changelog
 * Version 0.2 (Under developement)
 
   - Your Buddy Icon can now be set to the currently playing song's album
-    cover. Set *coverIcon* to true in the config file to enable.
+    cover. Set *cover_icon* to true in the config file to enable.
   - Made Media status type "tune". To update:
 
     + Stop AmarokPidgin in Amarok

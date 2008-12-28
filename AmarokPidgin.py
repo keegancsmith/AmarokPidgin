@@ -6,7 +6,7 @@ import dbus
 import re
 import signal
 import xml.parsers.expat
-from commands import getoutput
+from commands import getoutput, getstatusoutput
 from sys import stdin, exit, argv
 from time import sleep
 from ConfigParser import ConfigParser
@@ -19,7 +19,7 @@ DEFAULT_CONFIG = """
 [AmarokPidgin]
 status_name = Media
 status_message = Listening to $title by $artist on $album [Amarok]
-coverIcon = false
+cover_icon = false
 censor = false
 censor_words = # Put words here separated by a | eg: word1|word2|word3
 display = status # Where to display song playing. either status or nick
@@ -225,34 +225,44 @@ class AmarokPidgin(object):
     def configure(self):
         "Shows a kdialog to change status message"
         try:
-            title = "AmarokPidgin Configuration"
+            def kdialog(dialog_type, text):
+                cmd = ('kdialog --title "AmarokPidgin Configuration" '
+                       '--%s %s 2> /dev/null') % (dialog_type, text)
+                return getstatusoutput(cmd)
 
             # Configure display to use
-            text = "Please pick where to display the Now Playing message."
             current_display = self.config.get("AmarokPidgin", "display")
             if current_display == "status":
                 selected = ("on","off")
             else:
                 selected = ("off","on")
 
-            new_display = getoutput(('kdialog --title "%s" --radiolist "%s" ' + 
-                                     'status status %s ' + 
-                                     'nick nick %s 2> /dev/null') %
-                                    (title, text, selected[0], selected[1]))
+            msg = "Please pick where to display the Now Playing message."
+            text = '"%s" status status %s nick nick %s' % ((msg,) + selected)
+            new_display = kdialog('radiolist', text)[1]
 
             if new_display in ('nick','status'):
                 self.config.set("AmarokPidgin", "display", new_display)
 
 
             # Configure status message
-            current_status = self.config.get("AmarokPidgin", "status_message").replace("$","\\$")
-            text = "This will change the format of your Now Playing message.\n" + \
-                   "Valid variables are: \\$%s." % ', \\$'.join(AmarokPidgin.variables)
-
-            new_status = getoutput('kdialog --title "%s" --textinputbox "%s" "%s" 2> /dev/null' %
-                                    (title, text, current_status))
-
+            current_status = self.config.get("AmarokPidgin", "status_message")
+            current_status = current_status.replace("$","\\$")
+            variables = ', \\$'.join(AmarokPidgin.variables)
+            msg = ("This will change the format of your Now Playing message.\n"
+                   "Valid variables are: \\$%s.") % variables
+            text = '"%s" "%s"' % (msg, current_status)
+            new_status = kdialog('textinputbox', text)[1]
             self.config.set("AmarokPidgin", "status_message", new_status)
+
+
+            # Configure whether to update the Buddy Icon
+            msg = ("Would you like AmarokPidgin to update your Buddy Icon "
+                   "with the currently playing track's album cover?")
+            status = kdialog('yesno', '"%s"' % msg)[0] and 'false' or 'true'
+            if status == 'false':
+                self.restore_buddyicon()
+            self.config.set('AmarokPidgin', 'cover_icon', status)
 
 
             # Write updated config file
@@ -407,17 +417,24 @@ class AmarokPidgin(object):
 
     def update_buddyicon(self, cover):
         """
-        Updates Pidgin's default Buddy Icon if the coverIcon setting is true
+        Updates Pidgin's default Buddy Icon if the cover_icon setting is true
         """
-        if not self.config.getboolean("AmarokPidgin", "coverIcon"):
+        if not self.config.getboolean("AmarokPidgin", "cover_icon"):
             return
+
+        current = self.purple.PurplePrefsGetPath("/pidgin/accounts/buddyicon")
+
+        # The current cover isn't an album cover, so update the fallback buddy
+        # icon. This is just a heuristic, it won't always work.
+        if not 'albumcovers' in current:
+            self.buddyicon = current
 
         # Switch back the original Buddy Icon
         if cover == '':
             cover = self.buddyicon
 
         # Cover is the same, do not update
-        if cover == self.purple.PurplePrefsGetPath("/pidgin/accounts/buddyicon"):
+        if cover == current:
             self.log("Buddy Icon is already " + repr(cover))
             return
 
@@ -446,7 +463,7 @@ class AmarokPidgin(object):
                     self.update_display(message)
 
                 self.update_buddyicon(self.amarok['coverImage'])
-                    
+
                 self.revert_status = False
 
             elif action == 'stopped':
