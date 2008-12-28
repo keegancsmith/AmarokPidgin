@@ -429,6 +429,16 @@ class AmarokPidgin(object):
         if not 'albumcovers' in current:
             self.buddyicon = current
 
+        # Buddy Icon should be default if display is 'status' and the media
+        # status is not selected.
+        display = self.config.get("AmarokPidgin", "display")
+        cur_status = self.purple.PurpleSavedstatusGetCurrent()
+        if cover != '' and display == 'status' and cur_status != self.status:
+            cover = ''
+            if current != self.buddyicon:
+                self.log("Changing Buddy Icon to default because the media "
+                         "status is not selected")
+        
         # Switch back the original Buddy Icon
         if cover == '':
             cover = self.buddyicon
@@ -444,7 +454,7 @@ class AmarokPidgin(object):
 
 
     def restore_buddyicon(self):
-        self.update_buddyicon(self.buddyicon)
+        self.update_buddyicon('')
 
 
     def listen(self):
@@ -471,7 +481,7 @@ class AmarokPidgin(object):
                     self.revert_status = True
                     self.purple.PurpleSavedstatusActivate(self.default)
                 self.song = None
-                self.update_buddyicon('')
+                self.restore_buddyicon()
 
                 self.log("Default: %d" % self.default)
 
@@ -497,6 +507,13 @@ def cleanup(signum, frame):
     if signum == signal.SIGTERM:
         exit(0)
 
+def log_exception():
+    if DEBUG:
+        logf = file("/tmp/AmarokPidgin.log", "a")
+        print >>logf, "*"*60
+        import traceback
+        traceback.print_exc(file=logf)
+        logf.close()
 
 if __name__ == "__main__":
     interfacecls = Amarok1
@@ -511,16 +528,12 @@ if __name__ == "__main__":
             amarokPidgin.listen()
         except dbus.DBusException:
             # This usually means Pidgin has closed.  Change the status
-            # aswell as sleep for 20 seconds, hoping Pidgin would have
+            # as well as sleep for 20 seconds, hoping Pidgin would have
             # started up.
             cleanup(0,0)
-            if DEBUG:
-                logf = file("/tmp/AmarokPidgin.log", "a")
-                print >>logf, "*"*60
-                import traceback
-                traceback.print_exc(file=logf)
-                logf.close()
+            log_exception()
             sleep(20)
-        else: # Unexpected error, dont carry on looping
+        except: # Unexpected error, don't carry on looping
             cleanup(0,0)
-            break
+            log_exception()
+            raise
