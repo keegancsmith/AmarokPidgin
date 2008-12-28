@@ -6,7 +6,7 @@
 
 :Author: Keegan Carruthers-Smith <keegan.csmith@gmail.com>
 :Version: 0.2
-:Date: May 2008
+:Date: December 2008
 :URL: http://people.cs.uct.ac.za/~smtkee002/AmarokPidgin.html
 :Download: http://www.kde-apps.org/content/show.php?content=48025
 
@@ -72,21 +72,15 @@ string. **variable_imports** runs possible imports required for
 Examples
 --------
 
-* Quote
-
-.. sourcecode:: python
+* Quote ::
 
    variable_map = lambda x,y : y and ("'"+y+"'") or ''
 
-* Unknown String
-
-.. sourcecode:: python
+* Unknown String ::
 
    variable_map = lambda x,y : y or ("Unknown " + x.capitalize())
 
-* iPodify strings
-
-.. sourcecode:: python
+* iPodify strings ::
 
    variable_map = lambda x,y : ' '.join(['i' + s.capitalize() for s in y.split()])
 
@@ -103,18 +97,20 @@ Changelog
 
 * Version 0.2 (Under developement)
 
+  - Your Buddy Icon can now be set to the currently playing song's album
+    cover. Set *coverIcon* to true in the config file to enable.
   - Made Media status type "tune". To update:
 
     + Stop AmarokPidgin in Amarok
     + Delete Media status in Pidgin
     + Start AmarokPidgin in Amarok
 
-  - Added variables rating and score.
+  - New variables $rating and $score.
 
 * Version 0.1.9 (16/05/2008)
 
-  - New variables: $year, $nowPlaying, $lyricsURL, $lyrics. Based on a patch
-    by Hieu Hoang.
+  - New variables: $year, $nowPlaying, $lyricsURL and $lyrics. Based on a
+    patch by Hieu Hoang.
   - Variable Map. Based on work by Ryan Davis.
   - Seems to work with Pidgin 2.4.0 now.
   - Media status is of type Avaliable now by default.

@@ -19,6 +19,7 @@ DEFAULT_CONFIG = """
 [AmarokPidgin]
 status_name = Media
 status_message = Listening to $title by $artist on $album [Amarok]
+coverIcon = false
 censor = false
 censor_words = # Put words here separated by a | eg: word1|word2|word3
 display = status # Where to display song playing. either status or nick
@@ -88,6 +89,10 @@ class Amarok1(object):
             value = getoutput("dcop amarok player lyrics 2> /dev/null")
         else:
             value = getoutput("dcop amarok player %s 2> /dev/null" % key)
+
+        if key == 'coverImage' and 'nocover' in value:
+            value = ''
+
         return value.strip()
 
     def is_playing(self):
@@ -165,6 +170,7 @@ class AmarokPidgin(object):
         self.nicks_in_use   = set()
         self.song           = None
         self.revert_status  = False
+        self.buddyicon      = purple.PurplePrefsGetPath("/pidgin/accounts/buddyicon")
 
         # Load variable map
         try:
@@ -184,6 +190,7 @@ class AmarokPidgin(object):
         if amarok.is_playing():
             self.song = self.get_currently_playing()
             self.update_display(self.song)
+            self.update_buddyicon(self.amarok['coverImage'])
 
 
     def log(self,message):
@@ -398,16 +405,48 @@ class AmarokPidgin(object):
         return new_status
 
 
-    def listenForSongChanges(self):
-        "Listens for song changes from stdin. This method is blocking."
+    def update_buddyicon(self, cover):
+        """
+        Updates Pidgin's default Buddy Icon if the coverIcon setting is true
+        """
+        if not self.config.getboolean("AmarokPidgin", "coverIcon"):
+            return
+
+        # Switch back the original Buddy Icon
+        if cover == '':
+            cover = self.buddyicon
+
+        # Cover is the same, do not update
+        if cover == self.purple.PurplePrefsGetPath("/pidgin/accounts/buddyicon"):
+            self.log("Buddy Icon is already " + repr(cover))
+            return
+
+        # Update the cover
+        self.log("Changing Buddy Icon to " + repr(cover))
+        self.purple.PurplePrefsSetPath("/pidgin/accounts/buddyicon", cover)
+
+
+    def restore_buddyicon(self):
+        self.update_buddyicon(self.buddyicon)
+
+
+    def listen(self):
+        """
+        Listens for events from Amarok.
+        """
         for action in self.amarok.listen():
             if action == 'playing':
                 message = self.get_currently_playing()
-                self.log("Previously Playing: %s" % message)
+                self.log("Previously Playing: %s" % self.song)
                 self.log("Currently Playing: %s" % message)
-                if message != self.song: # The song has changed, update status
+
+                # The song has changed, update status
+                if message != self.song:
                     self.song = message
                     self.update_display(message)
+
+                self.update_buddyicon(self.amarok['coverImage'])
+                    
                 self.revert_status = False
 
             elif action == 'stopped':
@@ -415,6 +454,7 @@ class AmarokPidgin(object):
                     self.revert_status = True
                     self.purple.PurpleSavedstatusActivate(self.default)
                 self.song = None
+                self.update_buddyicon('')
 
                 self.log("Default: %d" % self.default)
 
@@ -432,6 +472,7 @@ def cleanup(signum, frame):
         if amarokPidgin:
             amarokPidgin.purple.PurpleSavedstatusActivate(amarokPidgin.default)
             amarokPidgin.restore_nicks()
+            amarokPidgin.restore_buddyicon()
             amarokPidgin = None
     except:
         pass
@@ -450,7 +491,7 @@ if __name__ == "__main__":
         try:
             interface = interfacecls()
             amarokPidgin = AmarokPidgin(interface)
-            amarokPidgin.listenForSongChanges()
+            amarokPidgin.listen()
         except dbus.DBusException:
             # This usually means Pidgin has closed.  Change the status
             # aswell as sleep for 20 seconds, hoping Pidgin would have
