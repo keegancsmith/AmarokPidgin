@@ -68,15 +68,16 @@ class Amarok2(object):
         self.player = dbus.Interface(obj, dbus_interface=interface)
 
     def __getitem__(self, key):
-        return player.GetMetadata().get(key, '')
+        return self.player.GetMetadata().get(key, '')
 
     def is_playing(self):
-        # TODO implement
-        pass
+        return self.player.GetStatus()[0] == 0
 
     def listen(self):
-        # TODO implement
-        pass
+        while True:
+            message = stdin.readline().strip()
+            assert message in ('playing', 'stopped')
+            yield message
 
 
 class Amarok1(object):
