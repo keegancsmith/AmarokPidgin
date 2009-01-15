@@ -11,9 +11,10 @@ from sys import stdin, exit, argv
 from time import sleep
 from ConfigParser import ConfigParser
 from StringIO import StringIO
+from Queue import Queue
 from random import choice
 
-DEBUG = False
+DEBUG = True
 
 DEFAULT_CONFIG = """
 [AmarokPidgin]
@@ -43,7 +44,7 @@ class ParseLyrics(object):
     def start_element(self, name, attrs):
         if 'page_url' in attrs:
             self.page_url = attrs['page_url']
-        
+
     def end_element(self, name):
         # Normalize data
         self.lyrics = ''.join(self.lyrics).split('\n')
@@ -51,7 +52,7 @@ class ParseLyrics(object):
         self.lyrics = [s.strip() for s in self.lyrics]
         # Remove empty lines
         self.lyrics = filter(bool, self.lyrics)
-    
+
     def char_data(self, data):
         self.lyrics.append(data)
 
@@ -140,6 +141,7 @@ class AmarokPidgin(object):
         if DEBUG:
             self.logf = file("/tmp/AmarokPidgin.log", "a")
             print >>self.logf, "-"*60
+            print >>self.logf, "Using engine " + type(amarok).__name__
 
         self.config = None
         self.parse_config()
@@ -186,7 +188,7 @@ class AmarokPidgin(object):
             self.variable_map = lambda x,y: y
         else:
             self.log("variable_map passed sanity check")
-            
+
         # If currently playing, change status
         if amarok.is_playing():
             self.song = self.get_currently_playing()
@@ -288,7 +290,7 @@ class AmarokPidgin(object):
             self.default = current
             if self.revert_status: # Switch back to Media Status
                 current = self.status
-            
+
 
         # Update Purple's status
         self.purple.PurpleSavedstatusSetMessage(self.status, message)
@@ -321,7 +323,7 @@ class AmarokPidgin(object):
     def decode(self, message):
         "Tries to decode the message"
         encodings = ['utf8', 'iso-8859-1']
-        
+
         try:
             import chardet
             encodings.append(chardet.detect(message)['encoding'])
@@ -338,9 +340,13 @@ class AmarokPidgin(object):
             else:
                 return message
 
-        
+
         self.log("DecodeError: No decodings worked. Using replace")
-        return message.decode('utf8', 'replace')
+        try:
+            return message.decode('utf8', 'replace')
+        except:
+            self.log("DecodeError: Replace decoding did not work. Returning raw message.")
+            return message
 
 
     def update_display(self, message):
@@ -409,7 +415,7 @@ class AmarokPidgin(object):
                 elif var == "lyricsURL" and l.page_url:
                     value = l.page_url.encode("utf8")
 
-                            
+
             value = self.variable_map(var, value)
             new_status = new_status.replace("$" + var, value)
 
@@ -439,7 +445,7 @@ class AmarokPidgin(object):
             if current != self.buddyicon:
                 self.log("Changing Buddy Icon to default because the media "
                          "status is not selected")
-        
+
         # Switch back the original Buddy Icon
         if cover == '':
             cover = self.buddyicon
@@ -505,7 +511,7 @@ def cleanup(signum, frame):
     except:
         pass
 
-    if signum == signal.SIGTERM:
+    if signum in (signal.SIGTERM, signal.SIGKILL):
         exit(0)
 
 def log_exception():
