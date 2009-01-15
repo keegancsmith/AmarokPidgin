@@ -14,7 +14,7 @@ from StringIO import StringIO
 from Queue import Queue
 from random import choice
 
-DEBUG = True
+DEBUG = False
 
 DEFAULT_CONFIG = """
 [AmarokPidgin]

@@ -15,8 +15,8 @@ fi
 version=$(fgrep ':Version:' README | awk '{ print $2 }')
 
 mkdir AmarokPidgin
-rst2html.py README > README.html
-cp AmarokPidgin.py AmarokPidgin.spec COPYING README README.html AmarokPidgin
+rst2html README > README.html
+cp MPRISPidgin.py AmarokPidgin.py AmarokPidgin.spec main.js script.spec COPYING README README.html AmarokPidgin
 tar cjf AmarokPidgin-$version.amarokscript.tar.bz2 AmarokPidgin
 
 rm -rf AmarokPidgin
