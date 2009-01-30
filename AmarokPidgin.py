@@ -77,7 +77,9 @@ class Amarok2(object):
     def listen(self):
         while True:
             message = stdin.readline().strip()
-            assert message in ('playing', 'stopped')
+            assert message in ('playing', 'stopped', 'quit')
+            if message == 'quit':
+                exit(0)
             yield message
 
 

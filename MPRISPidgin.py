@@ -3,9 +3,10 @@
 # Distributed under the GPLv2
 
 import dbus, dbus.glib
-import os, sys, signal
+import os, os.path, sys, signal
 from subprocess import Popen, PIPE, STDOUT
 
+os.chdir(os.path.dirname(sys.argv[1]))
 args = ('python', sys.argv[1], 'amarok2')
 amarokpidgin = Popen(args, bufsize=1, stdin=PIPE)
 
@@ -26,8 +27,8 @@ def init_dbus():
 
 
 def cleanup(signum, frame):
-    amarokpidgin.send_signal(signum)
     if signum in (signal.SIGTERM, signal.SIGKILL):
+        amarokpidgin.stdin.write('quit\n')
         sys.exit(0)
 
 
@@ -38,4 +39,7 @@ if __name__ == "__main__":
 
     import gobject
     loop = gobject.MainLoop()
-    loop.run()
+    try:
+        loop.run()
+    except KeyboardInterrupt:
+        cleanup(signal.SIGKILL, 0)

@@ -6,7 +6,7 @@
 
 :Author: Keegan Carruthers-Smith <keegan.csmith@gmail.com>
 :Version: 0.2
-:Date: December 2008
+:Date: January 2009
 :URL: http://people.cs.uct.ac.za/~smtkee002/AmarokPidgin.html
 :Download: http://www.kde-apps.org/content/show.php?content=48025
 
@@ -15,24 +15,24 @@
 Description
 ===========
 
-A plugin for Amarok that updates your Pidgin status message with what you are
-currently listening to.
+A plugin for Amarok 1 and 2 that updates your Pidgin status message with what
+you are currently listening to.
 
 If you want to update your Gaim status message, look for the AmarokGaim
 package.
 
 
-Dependicies
-===========
+Dependencies
+============
 
-* Amarok (Tested on Amarok 1.4.10)
+* Amarok (Tested on Amarok 1.4.10 and Amarok 2.0-SVN-Neon Jan 14 2009)
 * Pidgin with D-Bus support (Tested on Pidgin 2.5.2)
 * Python with D-Bus support (Tested on Python 2.5.2 (Should also work with
   Python 2.4))
-* DCOP client (Tested on KDE 3.5.10)
+* DCOP client (If using Amarok 1. Tested on KDE 3.5.10)
 * Optionally depends on chardet for better character
   decoding. [http://chardet.feedparser.org/]
- 
+
 
 Configuration
 =============
@@ -85,6 +85,15 @@ Examples
    variable_map = lambda x,y : ' '.join(['i' + s.capitalize() for s in y.split()])
 
 
+Amarok 2
+========
+
+AmarokPidgin now has rudimentary Amarok 2 support. It does not support many of
+the variables, updating your buddy icon and configuration from Amarok. To
+configure you have to edit *AmarokPidgin.ini*, which can be found in
+*~/.kde/share/apps/amarok/scripts/AmarokPidgin*.
+
+
 License
 =======
 
@@ -95,7 +104,7 @@ information.
 Changelog
 =========
 
-* Version 0.2 (Under developement)
+* Version 0.2 (30/01/2009)
 
   - Your Buddy Icon can now be set to the currently playing song's album
     cover. Set *cover_icon* to true in the config file to enable.
