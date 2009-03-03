@@ -5,10 +5,11 @@
 ==============
 
 :Author: Keegan Carruthers-Smith <keegan.csmith@gmail.com>
-:Version: 0.2
-:Date: January 2009
-:URL: http://people.cs.uct.ac.za/~smtkee002/AmarokPidgin.html
+:Version: 0.2.1
+:Date: March 2009
+:URL: http://people.cs.uct.ac.za/~ksmith/AmarokPidgin.html
 :Download: http://www.kde-apps.org/content/show.php?content=48025
+:Mercurial: http://bitbucket.org/keegan_csmith/amarokpidgin/overview/
 
 .. contents::
 
@@ -25,7 +26,7 @@ package.
 Dependencies
 ============
 
-* Amarok (Tested on Amarok 1.4.10 and Amarok 2.0-SVN-Neon Jan 14 2009)
+* Amarok (Tested on Amarok 1.4.10 or Amarok 2.0-SVN-Neon Jan 14 2009)
 * Pidgin with D-Bus support (Tested on Pidgin 2.5.2)
 * Python with D-Bus support (Tested on Python 2.5.2 (Should also work with
   Python 2.4))
@@ -104,7 +105,11 @@ information.
 Changelog
 =========
 
-* Version 0.2 (30/01/2009)
+* Version 0.2.1 (03/03/2009)
+
+  - Executible bit was not switched on! So could not install in Amarok 1.
+
+* Version 0.2 (11/02/2009)
 
   - Your Buddy Icon can now be set to the currently playing song's album
     cover. Set *cover_icon* to true in the config file to enable.
