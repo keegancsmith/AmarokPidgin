@@ -5,7 +5,7 @@
 ==============
 
 :Author: Keegan Carruthers-Smith <keegan.csmith@gmail.com>
-:Version: 0.2.1
+:Version: 0.2.2
 :Date: March 2009
 :URL: http://people.cs.uct.ac.za/~ksmith/AmarokPidgin.html
 :Download: http://www.kde-apps.org/content/show.php?content=48025
@@ -104,6 +104,11 @@ information.
 
 Changelog
 =========
+
+* Version 0.2.2 (Development)
+
+  - Passive Popup in Amarok 1 when a user tries to configure who does not have
+    kdialog installed.
 
 * Version 0.2.1 (03/03/2009)
 

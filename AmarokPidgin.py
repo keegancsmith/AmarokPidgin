@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Keegan Carruthers-Smith 2008 <keegan.csmith@gmail.com>
+# Keegan Carruthers-Smith 2006-2009 <keegan.csmith@gmail.com>
 # Distributed under the GPLv2
 
 import dbus
@@ -82,6 +82,10 @@ class Amarok2(object):
                 exit(0)
             yield message
 
+    def passive_popup(self, msg):
+        # TODO send passive msg to Amarok 2
+        pass
+
 
 class Amarok1(object):
     """
@@ -124,6 +128,9 @@ class Amarok1(object):
                 yield 'stopped'
             elif "configure" in message:
                 yield 'configure'
+
+    def passive_popup(self, msg):
+        getoutput("dcop amarok playlist popupMessage '%s' 2> /dev/null" % msg)
 
 
 class AmarokPidgin(object):
@@ -234,6 +241,12 @@ class AmarokPidgin(object):
                 cmd = ('kdialog --title "AmarokPidgin Configuration" '
                        '--%s %s 2> /dev/null') % (dialog_type, text)
                 return getstatusoutput(cmd)
+
+            if getstatusoutput('kdialog -v &> /dev/null')[0] != 0:
+                msg = ('You do not have kdialog installed, so you cannot '
+                       'configure AmarokPidgin')
+                self.amarok.passive_popup(msg)
+                raise Exception
 
             # Configure display to use
             current_display = self.config.get("AmarokPidgin", "display")
