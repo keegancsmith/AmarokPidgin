@@ -107,6 +107,8 @@ Changelog
 
 * Version 0.2.2 (Development)
 
+  - Buddy Icon support for Amarok 2.
+
   - Passive Popup in Amarok 1 when a user tries to configure who does not have
     kdialog installed.
 

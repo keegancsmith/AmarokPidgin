@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Keegan Carruthers-Smith 2006-2009 <keegan.csmith@gmail.com>
+# Keegan Carruthers-Smith 2006-2010 <keegan.csmith@gmail.com>
 # Distributed under the GPLv2
 
 import dbus
@@ -69,7 +69,11 @@ class Amarok2(object):
         self.player = dbus.Interface(obj, dbus_interface=interface)
 
     def __getitem__(self, key):
-        return self.player.GetMetadata().get(key, '')
+        if key == 'coverImage':
+            arturl = str(self.player.GetMetadata().get('arturl', ''))
+            if arturl.startswith('file://'):
+                return arturl[7:]
+        return str(self.player.GetMetadata().get(key, ''))
 
     def is_playing(self):
         return self.player.GetStatus()[0] == 0
@@ -77,9 +81,9 @@ class Amarok2(object):
     def listen(self):
         while True:
             message = stdin.readline().strip()
-            assert message in ('playing', 'stopped', 'quit')
-            if message == 'quit':
+            if message in ('quit', ''):
                 exit(0)
+            assert message in ('playing', 'stopped')
             yield message
 
     def passive_popup(self, msg):
@@ -116,8 +120,6 @@ class Amarok1(object):
             if len(message) == 0:
                 break
 
-            #self.log("Got message: %s" % message)
-
             # Function that given a list, will tell you if any of the
             # strings are in message
             is_in = lambda li: len([x for x in li if x in message]) > 0
@@ -148,9 +150,11 @@ class AmarokPidgin(object):
         """
 
         if DEBUG:
+            import os
             self.logf = file("/tmp/AmarokPidgin.log", "a")
             print >>self.logf, "-"*60
-            print >>self.logf, "Using engine " + type(amarok).__name__
+            print >>self.logf, "Using engine", type(amarok).__name__
+            print >>self.logf, "Current working directory:", os.getcwd()
 
         self.config = None
         self.parse_config()
@@ -246,7 +250,7 @@ class AmarokPidgin(object):
                 msg = ('You do not have kdialog installed, so you cannot '
                        'configure AmarokPidgin')
                 self.amarok.passive_popup(msg)
-                raise Exception
+                raise Exception('kdialog missing')
 
             # Configure display to use
             current_display = self.config.get("AmarokPidgin", "display")
